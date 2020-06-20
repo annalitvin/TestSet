@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'crispy_forms',
 
     'user_account',
+    'testset',
+    'core'
 ]
 
 MIDDLEWARE = [
@@ -55,6 +57,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+
+    'core.middleware.QueryParamsInjectorMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
