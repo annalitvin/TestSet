@@ -1,5 +1,6 @@
 from django.contrib.auth.views import LoginView, LogoutView
-from django.urls import reverse
+from django.contrib.messages.views import SuccessMessageMixin
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
 from app import settings
@@ -30,13 +31,13 @@ class UserAccountLogoutView(LogoutView):
     extra_context = {'title': 'Logout'}
 
 
-class UserAccountProfileView(UpdateView):
+class UserAccountProfileView(SuccessMessageMixin, UpdateView):
     template_name = 'user_account/profile.html'
     extra_context = {'title': 'Edit current user profile'}
     form_class = UserAccountProfileForm
 
-    def get_success_url(self):
-        return reverse('index')
+    success_url = reverse_lazy('account:profile')
+    success_message = "Your account has been updated!"
 
     def get_object(self, queryset=None):
         return self.request.user
