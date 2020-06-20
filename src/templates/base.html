@@ -14,13 +14,19 @@
 <div class="container">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <a class="navbar-brand" href="{% url 'index' %}">TESTS <span class="sr-only">(current)</span></a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<!--        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"-->
+<!--                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">-->
+<!--            <span class="navbar-toggler-icon"></span>-->
+<!--        </button>-->
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{% url 'testset:list' %}"><b>Test suites</b></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{% url 'testset:leader_bord' %}"><b>Leader Bord</b></a>
+                </li>
 
             </ul>
 
@@ -51,8 +57,10 @@
         </div>
     </nav>
 
-    <h2 class="p-4">{{ title }}</h2>
-    <p></p>
+    <div class="p-2">
+        {% include 'includes/messages.html' %}
+    </div>
+    <h2 class="p-3 m-1 bg-light rounded text-center">{{ title }}</h2>
     <p></p>
     {% block content %}
     {% endblock %}
