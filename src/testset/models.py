@@ -66,3 +66,4 @@ class TestRunDetail(models.Model):
     test_result = models.ForeignKey(to=TestResult, related_name='test_run_details', on_delete=models.CASCADE)
     question = models.ForeignKey(to=Question, related_name='test_run_details', on_delete=models.CASCADE)
     variant = models.ForeignKey(to=Variant, related_name='test_run_details', on_delete=models.CASCADE)
+    is_correct = models.BooleanField()
