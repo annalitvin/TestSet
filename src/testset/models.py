@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Count, Sum
 
 
 class Topic(models.Model):
@@ -18,6 +19,8 @@ class Test(models.Model):
         (2, 'Middle'),
         (3, 'Advanced'),
     )
+    MIN_LIMIT = 3
+    MAX_LIMIT = 20
 
     topic = models.ForeignKey(to=Topic, related_name='tests', null=True, on_delete=models.SET_NULL)
     title = models.CharField(max_length=64)
@@ -28,12 +31,26 @@ class Test(models.Model):
     def __str__(self):
         return f'{self.title}'
 
+    def questions_count(self):
+        return self.questions.count()
+
+    def last_run(self):
+        last_run = self.test_results.order_by('-id').first()
+        if last_run:
+            return last_run.datetime_run
+        return ''
+
+    def number_runs(self):
+        return self.test_results.count()
+
 
 class Question(models.Model):
     MIN_LIMIT = 3
     MAX_LIMIT = 6
 
     test = models.ForeignKey(to=Test, related_name='questions', on_delete=models.CASCADE)
+    number = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(MAX_LIMIT)],
+                                              default=1)
     text = models.CharField(max_length=64)
     description = models.TextField(max_length=512, null=True, blank=True)
 
@@ -48,6 +65,7 @@ class Question(models.Model):
 
 
 class Variant(models.Model):
+
     text = models.CharField(max_length=64)
     question = models.ForeignKey(to=Question, related_name='variants', on_delete=models.CASCADE)
     is_correct = models.BooleanField(default=False)
@@ -59,11 +77,30 @@ class Variant(models.Model):
 class TestResult(models.Model):
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='test_results', on_delete=models.CASCADE)
     test = models.ForeignKey(to=Test, related_name='test_results', on_delete=models.CASCADE)
-    avg_score = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+
+    datetime_run = models.DateTimeField(auto_now_add=True, null=True)
+    is_completed = models.BooleanField(default=False, null=True)
+
+    avr_score = models.DecimalField(max_digits=5, decimal_places=2, default=0,
+                                    validators=[MinValueValidator(0), MaxValueValidator(100)], null=True)
+
+    def update_score(self):
+        qs = self.test_result_details.values('question').annotate(
+            num_answers=Count('question'),
+            score=Sum('is_correct')
+        )
+        self.avr_score = sum(
+            int(entry['score']) / entry['num_answers']
+            for entry in qs
+        )
+
+    def finish(self):
+        self.update_score()
+        self.is_complete = True
 
 
-class TestRunDetail(models.Model):
-    test_result = models.ForeignKey(to=TestResult, related_name='test_run_details', on_delete=models.CASCADE)
-    question = models.ForeignKey(to=Question, related_name='test_run_details', on_delete=models.CASCADE)
-    variant = models.ForeignKey(to=Variant, related_name='test_run_details', on_delete=models.CASCADE)
-    is_correct = models.BooleanField()
+class TestResultDetail(models.Model):
+    test_result = models.ForeignKey(to=TestResult, related_name='test_result_details', on_delete=models.CASCADE)
+    question = models.ForeignKey(to=Question, on_delete=models.CASCADE)
+    variant = models.ForeignKey(to=Variant, related_name='test_result_details', on_delete=models.CASCADE)
+    is_correct = models.BooleanField(null=True, default=False)
