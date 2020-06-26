@@ -1,4 +1,4 @@
-{% if result_list %}
+{% if user_list %}
     <table class="table table-hover">
         <thead class="thead-dark">
             <tr>
@@ -8,13 +8,12 @@
               <th>Average score</th>
             </tr>
         </thead>
-        {% for result in result_list %}
+        {% for user in user_list %}
 
             <tr>
               <td> {{ forloop.counter }} </td>
-              <td> <img class="rounded-circle p-1 m-1" width="180" height="180"  src="{{ result.user.image.url }}"></td>
-              <td> {{ result.user.username }}</td>
-              <td> {{ result.avg_score }}</td>
+              <td> {{ user.location }}</td>
+              <td> {{ user.test_results.avr_score }}</td>
             </tr>
         {% endfor %}
     </table>
