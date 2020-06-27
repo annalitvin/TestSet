@@ -5,7 +5,6 @@ from django.db.models import Count, Sum
 
 
 class Topic(models.Model):
-
     title = models.CharField(max_length=64)
     description = models.TextField(max_length=1024, null=True, blank=True)
 
@@ -65,7 +64,6 @@ class Question(models.Model):
 
 
 class Variant(models.Model):
-
     text = models.CharField(max_length=64)
     question = models.ForeignKey(to=Question, related_name='variants', on_delete=models.CASCADE)
     is_correct = models.BooleanField(default=False)
@@ -94,9 +92,13 @@ class TestResult(models.Model):
             for entry in qs
         )
 
+    def percent_correct_answer(self, is_correct, questions_count):
+        return is_correct / questions_count * 100
+
     def finish(self):
         self.update_score()
-        self.is_complete = True
+        self.is_completed = True
+        self.save()
 
 
 class TestResultDetail(models.Model):
