@@ -21,8 +21,8 @@
                     <tbody>
                       <tr>
                         <td>Correct answers</td>
-                          {% with is_correct=is_correct  questions_count=questions_count %}
-                        <td> {{ is_correct }} of {{ questions_count }} ({{ is_correct|div:questions_count|mul:100 }})</td>
+                          {% with is_correct=is_correct  questions_count=test.questions_count %}
+                        <td> {{ is_correct }} of {{ test.questions_count }} ({{ is_correct|div:questions_count|mul:100 }})</td>
                           {% endwith %}
                       </tr>
                       <tr>
