@@ -17,7 +17,7 @@
               <td> {{ test.title }}</td>
               <td> {{ test.description }}</td>
               <td> {{ test.level }}</td>
-              <td> <a href="" class="btn btn-primary">START</a></td>
+              <td> <a href="{% url 'testset:start' test.id %}" class="btn btn-primary">START</a></td>
             </tr>
         {% endfor %}
     </table>

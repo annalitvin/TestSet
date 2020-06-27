@@ -60,10 +60,13 @@
     <div class="p-2">
         {% include 'includes/messages.html' %}
     </div>
-    <h2 class="p-3 m-1 bg-light rounded text-center">{{ title }}</h2>
-    <p></p>
-    {% block content %}
-    {% endblock %}
+    <h2 class="p-3 m-1 bg-light rounded text-center">
+        {% block title_page %}{{ title }}{% endblock %}
+    </h2>
+    <div class="border border-dark rounded p-3 m-3">
+        {% block content %}
+        {% endblock %}
+    </div>
 </div>
 </body>
 </html>
