@@ -2,6 +2,7 @@ import datetime
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Count, Sum
 
 
 class User(AbstractUser):
@@ -12,4 +13,7 @@ class User(AbstractUser):
     birth_date = models.DateField(null=True, blank=True, default=datetime.date.today)
 
     def update_score(self):
-        self.avr_score = self.test_results.values('avr_score').last().get('avr_score')
+        qs = self.test_results.values('avr_score').annotate(
+            points=Sum('avr_score')
+        )
+        self.avr_score = sum(int(entry['avr_score']) for entry in qs)
