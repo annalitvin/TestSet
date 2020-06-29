@@ -113,11 +113,12 @@ class TestRunView(View):
             self.variants_count.clear()
 
             current_test_result.finish()
+            current_test_result.save()
             current_user = User.objects.get(pk=request.user.pk)
             current_user.update_score()
             current_user.save()
 
-            percent_correct_answer = current_test_result.percent_correct_answer(is_correct, questions_count)
+            score_info = current_test_result.score_info()
 
             return render(
                 request=request,
@@ -125,9 +126,7 @@ class TestRunView(View):
                 context={
                     'test_result': current_test_result,
                     'time_spent': datetime.datetime.utcnow() - current_test_result.datetime_run.replace(tzinfo=None),
-                    'is_correct': is_correct,
-                    'percent_correct_answer': percent_correct_answer,
-                    'questions_count': questions_count,
+                    'score_info': score_info,
                     'test': test
                 }
             )
@@ -144,14 +143,18 @@ class TestStartView(View):
         test = Test.objects.get(pk=test_pk)
 
         is_completed = TestResult.objects.filter(user=request.user, test=test).last()
-        if is_completed.is_completed is True:
-            new = True
+        if is_completed is not None:
+            if is_completed.is_completed:
+                new = True
+                test_result = TestResult.objects.create(user=request.user,
+                                                        test=test)
+            else:
+                current_number_question = TestResultDetail.objects.values('question')\
+                    .filter(test_result=is_completed).last()
+                current_number_question = Question.objects.get(pk=int(current_number_question.get('question'))).number
+        else:
             test_result = TestResult.objects.create(user=request.user,
                                                     test=test)
-        else:
-            current_number_question = TestResultDetail.objects.values('question')\
-                .filter(test_result=is_completed).last()
-            current_number_question = Question.objects.get(pk=int(current_number_question.get('question'))).number
 
         best_result = User.objects.aggregate(Max('avr_score')).get('avr_score__max')
         best_result_users = User.objects.filter(avr_score=best_result)

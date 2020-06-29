@@ -92,13 +92,21 @@ class TestResult(models.Model):
             for entry in qs
         )
 
-    def percent_correct_answer(self, is_correct, questions_count):
-        return is_correct / questions_count * 100
+    def correct_answers_count(self):
+        qs = self.test_result_details.values('question').annotate(
+            num_answers=Count('question'),
+            points=Sum('is_correct')
+        )
+        return sum(e['num_answers'] == int(e['points']) for e in qs)
+
+    def score_info(self):
+        num_questions = self.test.questions_count()
+        num_answers = self.correct_answers_count()
+        return f'{num_answers} of {num_questions} ({(num_answers / num_questions) * 100:.2f}%)'
 
     def finish(self):
         self.update_score()
         self.is_completed = True
-        self.save()
 
 
 class TestResultDetail(models.Model):
