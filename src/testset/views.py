@@ -138,29 +138,27 @@ class TestStartView(View):
 
         new = False
         current_number_question = None
-        test_result = None
+        test_result_obj = None
 
         test = Test.objects.get(pk=test_pk)
 
-        is_completed = TestResult.objects.filter(user=request.user, test=test).last()
-        if is_completed is not None:
-            if is_completed.is_completed:
+        test_result = TestResult.objects.filter(user=request.user, test=test).last()
+        if test_result is not None:
+            if test_result.is_completed:
                 new = True
-                test_result = TestResult.objects.create(user=request.user,
+                test_result_obj = TestResult.objects.create(user=request.user,
                                                         test=test)
             else:
-                current_number_question = TestResultDetail.objects.values('question')\
-                    .filter(test_result=is_completed).last()
-                current_number_question = Question.objects.get(pk=int(current_number_question.get('question'))).number
+                current_number_question = test_result.test_result_details.last().question.number
         else:
-            test_result = TestResult.objects.create(user=request.user,
+            test_result_obj = TestResult.objects.create(user=request.user,
                                                     test=test)
 
         best_result = User.objects.aggregate(Max('avr_score')).get('avr_score__max')
         best_result_users = User.objects.filter(avr_score=best_result)
 
         return render(request, 'testset/test_start.html', {'test': test,
-                                                           'test_result': test_result,
+                                                           'test_result': test_result_obj,
                                                            'best_result': best_result,
                                                            'best_result_users': best_result_users,
                                                            'current_number_question': current_number_question,
