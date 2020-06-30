@@ -47,7 +47,6 @@ class UserLeaderBoardListView(ListView):
 
 
 class TestRunView(View):
-
     PREFIX = 'answer_'
     variants_count = []
 
@@ -102,7 +101,7 @@ class TestRunView(View):
         if question.number < questions_count:
             return redirect(reverse('testset:run_step', kwargs={'pk': pk, 'seq_nr': seq_nr + 1}))
         else:
-            qs = current_test_result.test_result_details.values('question').filter(is_correct=True).\
+            qs = current_test_result.test_result_details.values('question').filter(is_correct=True). \
                 annotate(Count('is_correct'))
 
             is_correct = 0
@@ -147,12 +146,12 @@ class TestStartView(View):
             if test_result.is_completed:
                 new = True
                 test_result_obj = TestResult.objects.create(user=request.user,
-                                                        test=test)
+                                                            test=test)
             else:
                 current_number_question = test_result.test_result_details.last().question.number
         else:
             test_result_obj = TestResult.objects.create(user=request.user,
-                                                    test=test)
+                                                        test=test)
 
         best_result = User.objects.aggregate(Max('avr_score')).get('avr_score__max')
         best_result_users = User.objects.filter(avr_score=best_result)
