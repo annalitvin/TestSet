@@ -13,7 +13,5 @@ class User(AbstractUser):
     birth_date = models.DateField(null=True, blank=True, default=datetime.date.today)
 
     def update_score(self):
-        qs = self.test_results.values('avr_score').annotate(
-            points=Sum('avr_score')
-        )
-        self.avr_score = sum(int(entry['avr_score']) for entry in qs)
+        self.avr_score = self.test_results.aggregate(points=Sum('avr_score')).get('points', 0.0) / \
+                         self.test_results.count()
