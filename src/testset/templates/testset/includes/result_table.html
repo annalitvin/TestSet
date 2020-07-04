@@ -5,15 +5,22 @@
               <th>№</th>
               <th></th>
               <th>Username</th>
-              <th>Average score</th>
+              <th>Total score</th>
+              <th>Passed tests</th>
+              <th>Percent success</th>
+              <th>Last run</th>
             </tr>
         </thead>
         {% for user in user_list %}
 
             <tr>
               <td> {{ forloop.counter }} </td>
-              <td> {{ user.location }}</td>
-              <td> {{ user.test_results.avr_score }}</td>
+              <td> <img class="rounded-circle p-1 m-1" width="60" height="60"  src="{{ user.image.url }}"></td>
+              <td> {{ user.username }}</td>
+              <td> {{ user.total_score }}</td>
+              <td> {{ user.count_passed_tests }}</td>
+              <td>{{ user.percent_success_passed }} %</td>
+              <td> {{ user.last_run }}</td>
             </tr>
         {% endfor %}
     </table>
