@@ -47,12 +47,10 @@ class UserLeaderBoardListView(ListView):
 
 
 class TestRunView(View):
-
     PREFIX = 'answer_'
     variants_count = []
 
     def get(self, request, pk, seq_nr):
-        print(self.variants_count)
 
         question = Question.objects.filter(test__id=pk, number=seq_nr).first()
 
@@ -62,7 +60,8 @@ class TestRunView(View):
         ]
         return render(request, 'testset/test_run.html', {'question': question,
                                                          'answers': variants,
-                                                         'prefix': self.PREFIX})
+                                                         'prefix': self.PREFIX,
+                                                         })
 
     def post(self, request, pk, seq_nr):
 
@@ -72,6 +71,8 @@ class TestRunView(View):
         variants = Variant.objects.filter(
             question=question
         ).all()
+
+        questions_count = test.questions_count()
 
         choices = {
             k.replace(self.PREFIX, ''): True
@@ -97,10 +98,10 @@ class TestRunView(View):
                 is_correct=(value == variant.is_correct)
             )
 
-        if question.number < test.questions_count():
+        if question.number < questions_count:
             return redirect(reverse('testset:run_step', kwargs={'pk': pk, 'seq_nr': seq_nr + 1}))
         else:
-            qs = current_test_result.test_result_details.values('question').filter(is_correct=True).\
+            qs = current_test_result.test_result_details.values('question').filter(is_correct=True). \
                 annotate(Count('is_correct'))
 
             is_correct = 0
@@ -116,14 +117,15 @@ class TestRunView(View):
             current_user.update_score()
             current_user.save()
 
+            score_info = current_test_result.score_info()
+
             return render(
                 request=request,
                 template_name='testset/test_end.html',
                 context={
                     'test_result': current_test_result,
                     'time_spent': datetime.datetime.utcnow() - current_test_result.datetime_run.replace(tzinfo=None),
-                    'is_correct': is_correct,
-                    'questions_count': test.questions_count(),
+                    'score_info': score_info,
                     'test': test
                 }
             )
@@ -133,14 +135,30 @@ class TestStartView(View):
 
     def get(self, request, test_pk):
 
+        new = False
+        current_number_question = None
+        test_result_obj = None
+
         test = Test.objects.get(pk=test_pk)
-        test_result = TestResult.objects.create(user=request.user,
-                                                test=test)
+
+        test_result = TestResult.objects.filter(user=request.user, test=test).last()
+        if test_result is not None:
+            if test_result.is_completed:
+                new = True
+                test_result_obj = TestResult.objects.create(user=request.user,
+                                                            test=test)
+            else:
+                current_number_question = test_result.test_result_details.last().question.number
+        else:
+            test_result_obj = TestResult.objects.create(user=request.user,
+                                                        test=test)
 
         best_result = User.objects.aggregate(Max('avr_score')).get('avr_score__max')
         best_result_users = User.objects.filter(avr_score=best_result)
 
         return render(request, 'testset/test_start.html', {'test': test,
-                                                           'test_result': test_result,
+                                                           'test_result': test_result_obj,
                                                            'best_result': best_result,
-                                                           'best_result_users': best_result_users})
+                                                           'best_result_users': best_result_users,
+                                                           'current_number_question': current_number_question,
+                                                           'new': new})
