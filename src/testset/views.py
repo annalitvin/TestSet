@@ -1,10 +1,11 @@
 import datetime
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Max
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView
 from django.views.generic.base import View
 
@@ -29,10 +30,11 @@ class TestListView(ListView):
         return context
 
 
-class UserLeaderBoardListView(ListView):
+class UserLeaderBoardListView(LoginRequiredMixin, ListView):
     model = User
     template_name = 'testset/result_list.html'
     context_object_name = 'user_list'
+    login_url = reverse_lazy('account:login')
 
     paginate_by = 5
 
@@ -46,7 +48,9 @@ class UserLeaderBoardListView(ListView):
         return context
 
 
-class TestRunView(View):
+class TestRunView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('account:login')
+
     PREFIX = 'answer_'
     variants_count = []
 
@@ -128,12 +132,14 @@ class TestRunView(View):
             current_user.save()
 
             score_info = current_test_result.score_info()
+            score_result = current_test_result.avr_score
 
             return render(
                 request=request,
                 template_name='testset/test_end.html',
                 context={
                     'test_result': current_test_result,
+                    'score_result': round(score_result, 2),
                     'time_spent': datetime.datetime.utcnow() - current_test_result.datetime_run.replace(tzinfo=None),
                     'score_info': score_info,
                     'test': test
@@ -141,7 +147,8 @@ class TestRunView(View):
             )
 
 
-class TestStartView(View):
+class TestStartView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('account:login')
 
     def get(self, request, test_pk):
 
