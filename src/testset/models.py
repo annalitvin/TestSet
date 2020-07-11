@@ -34,7 +34,7 @@ class Test(models.Model):
         return self.questions.count()
 
     def last_run(self):
-        last_run = self.test_results.order_by('-id').first()
+        last_run = self.test_results.order_by('-datetime_run').first()
         if last_run:
             return last_run.datetime_run
         return ''
