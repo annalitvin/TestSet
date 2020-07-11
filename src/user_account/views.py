@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse, reverse_lazy
@@ -26,18 +27,22 @@ class UserAccountLoginView(LoginView):
     extra_context = {'title': 'Login as a user'}
 
 
-class UserAccountLogoutView(LogoutView):
+class UserAccountLogoutView(LoginRequiredMixin, LogoutView):
     template_name = 'user_account/logout.html'
     extra_context = {'title': 'Logout'}
 
+    login_url = reverse_lazy('account:login')
 
-class UserAccountProfileView(SuccessMessageMixin, UpdateView):
+
+class UserAccountProfileView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     template_name = 'user_account/profile.html'
     extra_context = {'title': 'Edit current user profile'}
     form_class = UserAccountProfileForm
 
     success_url = reverse_lazy('account:profile')
     success_message = "Your account has been updated!"
+
+    login_url = reverse_lazy('account:login')
 
     def get_object(self, queryset=None):
         return self.request.user
