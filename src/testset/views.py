@@ -36,7 +36,7 @@ class UserLeaderBoardListView(LoginRequiredMixin, ListView):
     context_object_name = 'user_list'
     login_url = reverse_lazy('account:login')
 
-    paginate_by = 5
+    paginate_by = 10
 
     def get_queryset(self):
         qs = super().get_queryset().order_by('-avr_score')
