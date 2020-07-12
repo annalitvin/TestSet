@@ -105,11 +105,6 @@ class TestResult(models.Model):
         num_answers = self.correct_answers_count()
         return f'{num_answers} of {num_questions} ({(num_answers / num_questions) * 100:.2f}%)'
 
-    def percent_correct_answers(self):
-        num_questions = self.test.questions_count()
-        num_answers = self.correct_answers_count()
-        return num_answers / num_questions
-
     def test_question_count(self):
         num_questions = self.test.questions_count()
         return num_questions
