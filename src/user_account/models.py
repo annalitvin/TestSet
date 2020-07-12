@@ -13,8 +13,10 @@ class User(AbstractUser):
     birth_date = models.DateField(null=True, blank=True, default=datetime.date.today)
 
     def update_score(self):
-        self.avr_score = self.test_results.aggregate(points=Sum('avr_score')).get('points', 0.0) / \
-                         self.test_results.count()
+        test_results = self.test_results.filter(is_completed=True)
+        self.avr_score = test_results.aggregate(
+            points=Sum('avr_score')
+        ).get('points', 0.0) / test_results.count()
 
     def count_passed_tests(self):
         return self.test_results.filter(is_completed=True).count()
@@ -23,10 +25,18 @@ class User(AbstractUser):
         return self.avr_score
 
     def last_run(self):
-        return self.test_results.last().datetime_run
+        if self.test_results.count() != 0:
+            return self.test_results.last().datetime_run
+        else:
+            return "_____"
 
     def percent_success_passed(self):
-        percent_success_passed = sum([user.percent_correct_answers() for user in
-                                      self.test_results.filter(is_completed=True)])
+        count_passed_test = self.count_passed_tests()
+        test_results = self.test_results.filter(is_completed=True)
 
-        return round(percent_success_passed, 2)
+        if count_passed_test != 0:
+            percent_success_passed = round((sum([test_result.correct_answers_count() for test_result in test_results]) / \
+                                            sum([test_result.test_question_count() for test_result in test_results]))
+                                           * 100, 2)
+            return percent_success_passed
+        return 0
