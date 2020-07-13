@@ -38,7 +38,7 @@
                     <td>Last run</td>
                     <td>{{ test.last_run }}</td>
                   </tr>
-                {% if not new %}
+                {% if not test_result.is_new %}
                   <tr>
                     <td>Current open run</td>
                     <td>{{ test_result.datetime_run }}</td>
@@ -52,13 +52,13 @@
                     <img class="rounded-circle p-1 m-1" width="350" height="350"  src="{{ test.image.url }}">
                 </div>
 
-                   {% if new %}
+                   {% if test_result.is_new %}
                     <div class="d-flex justify-content-center mt-5 mb-5" >
-                        <a href="{% url 'testset:run_step' pk=test.id seq_nr=1 %}" type="button" class="btn-lg btn-success">START ▶️</a>
+                        <a href="{% url 'testset:next' pk=test.id %}" type="button" class="btn-lg btn-success">START ▶️</a>
                     </div>
                     {% else %}
                        <div class="d-flex justify-content-center mt-5 mb-5" >
-                         <a href="{% url 'testset:run_step' pk=test.id seq_nr=current_number_question|add:1 %}" type="button" class="btn-lg btn-warning">CONTINUE️</a>
+                         <a href="{% url 'testset:next' pk=test.id %}" type="button" class="btn-lg btn-warning">CONTINUE️</a>
                       </div>
                     {% endif %}
             </div>

@@ -1,7 +1,8 @@
 import datetime
 
 from django.contrib import messages
-from django.db.models import Max, Count
+from django.db.models import Max
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic import ListView
@@ -35,10 +36,9 @@ class UserLeaderBoardListView(ListView):
 
     paginate_by = 5
 
-    # def get_queryset(self):
-    #     qs = super().get_queryset().order_by('-avr_score')
-    #     qs.select_related('user')
-    #     return qs
+    def get_queryset(self):
+        qs = super().get_queryset().order_by('-avr_score')
+        return qs
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=None, **kwargs)
@@ -50,9 +50,15 @@ class TestRunView(View):
     PREFIX = 'answer_'
     variants_count = []
 
-    def get(self, request, pk, seq_nr):
+    def get(self, request, pk):
 
-        question = Question.objects.filter(test__id=pk, number=seq_nr).first()
+        if 'testresult' not in request.session:
+            return HttpResponse('ERROR!')
+
+        testresult_step = request.session.get('testresult_step', 1)
+        request.session['testresult_step'] = testresult_step
+
+        question = Question.objects.get(test__id=pk, number=testresult_step)
 
         variants = [
             variant.text
@@ -63,10 +69,15 @@ class TestRunView(View):
                                                          'prefix': self.PREFIX,
                                                          })
 
-    def post(self, request, pk, seq_nr):
+    def post(self, request, pk):
+
+        if 'testresult_step' not in request.session:
+            return HttpResponse('ERROR!')
+
+        testresult_step = request.session['testresult_step']
 
         test = Test.objects.get(pk=pk)
-        question = Question.objects.filter(test__id=pk, number=seq_nr).first()
+        question = Question.objects.get(test__id=pk, number=testresult_step)
 
         variants = Variant.objects.filter(
             question=question
@@ -82,12 +93,15 @@ class TestRunView(View):
 
         if not choices:
             messages.error(self.request, extra_tags='danger', message="ERROR: You should select at least 1 answer!")
-            return redirect(reverse('testset:run_step', kwargs={'pk': pk, 'seq_nr': seq_nr}))
+            return redirect(reverse('testset:next', kwargs={'pk': pk}))
 
-        current_test_result = TestResult.objects.filter(
-            test=test,
-            user=request.user,
-            is_completed=False).last()
+        if len(choices) == len(variants):
+            messages.error(self.request, extra_tags='danger', message="ERROR: You can't select ALL answer!")
+            return redirect(reverse('testset:next', kwargs={'pk': pk}))
+
+        current_test_result = TestResult.objects.get(
+            id=request.session['testresult']
+        )
 
         for idx, variant in enumerate(variants, 1):
             value = choices.get(str(idx), False)
@@ -99,17 +113,13 @@ class TestRunView(View):
             )
 
         if question.number < questions_count:
-            return redirect(reverse('testset:run_step', kwargs={'pk': pk, 'seq_nr': seq_nr + 1}))
+            current_test_result.is_new = False
+            current_test_result.save()
+            request.session['testresult_step'] = testresult_step + 1
+            return redirect(reverse('testset:next', kwargs={'pk': pk}))
         else:
-            qs = current_test_result.test_result_details.values('question').filter(is_correct=True). \
-                annotate(Count('is_correct'))
-
-            is_correct = 0
-            for qs_item in zip(qs, self.variants_count):
-                if qs_item[0].get('is_correct__count') == qs_item[1]:
-                    is_correct += 1
-
-            self.variants_count.clear()
+            del request.session['testresult']
+            del request.session['testresult_step']
 
             current_test_result.finish()
             current_test_result.save()
@@ -135,30 +145,25 @@ class TestStartView(View):
 
     def get(self, request, test_pk):
 
-        new = False
-        current_number_question = None
-        test_result_obj = None
-
         test = Test.objects.get(pk=test_pk)
 
-        test_result = TestResult.objects.filter(user=request.user, test=test).last()
-        if test_result is not None:
-            if test_result.is_completed:
-                new = True
-                test_result_obj = TestResult.objects.create(user=request.user,
-                                                            test=test)
-            else:
-                current_number_question = test_result.test_result_details.last().question.number
+        test_result_id = request.session.get('testresult')
+
+        if test_result_id:
+            test_result = TestResult.objects.get(id=test_result_id)
         else:
-            test_result_obj = TestResult.objects.create(user=request.user,
-                                                        test=test)
+            test_result = TestResult.objects.create(
+                user=request.user,
+                test=test
+            )
+
+        request.session['testresult'] = test_result.id
 
         best_result = User.objects.aggregate(Max('avr_score')).get('avr_score__max')
         best_result_users = User.objects.filter(avr_score=best_result)
 
         return render(request, 'testset/test_start.html', {'test': test,
-                                                           'test_result': test_result_obj,
-                                                           'best_result': best_result,
+                                                           'test_result': test_result,
+                                                           'best_result': round(best_result, 2),
                                                            'best_result_users': best_result_users,
-                                                           'current_number_question': current_number_question,
-                                                           'new': new})
+                                                           })

@@ -78,6 +78,7 @@ class TestResult(models.Model):
 
     datetime_run = models.DateTimeField(auto_now_add=True, null=True)
     is_completed = models.BooleanField(default=False, null=True)
+    is_new = models.BooleanField(default=True)
 
     avr_score = models.DecimalField(max_digits=5, decimal_places=2, default=0,
                                     validators=[MinValueValidator(0), MaxValueValidator(100)], null=True)
@@ -103,6 +104,11 @@ class TestResult(models.Model):
         num_questions = self.test.questions_count()
         num_answers = self.correct_answers_count()
         return f'{num_answers} of {num_questions} ({(num_answers / num_questions) * 100:.2f}%)'
+
+    def percent_correct_answers(self):
+        num_questions = self.test.questions_count()
+        num_answers = self.correct_answers_count()
+        return num_answers / num_questions
 
     def finish(self):
         self.update_score()
