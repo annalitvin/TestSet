@@ -34,7 +34,7 @@ class Test(models.Model):
         return self.questions.count()
 
     def last_run(self):
-        last_run = self.test_results.order_by('-id').first()
+        last_run = self.test_results.order_by('-datetime_run').first()
         if last_run:
             return last_run.datetime_run
         return ''
@@ -105,10 +105,9 @@ class TestResult(models.Model):
         num_answers = self.correct_answers_count()
         return f'{num_answers} of {num_questions} ({(num_answers / num_questions) * 100:.2f}%)'
 
-    def percent_correct_answers(self):
+    def test_question_count(self):
         num_questions = self.test.questions_count()
-        num_answers = self.correct_answers_count()
-        return num_answers / num_questions
+        return num_questions
 
     def finish(self):
         self.update_score()
