@@ -1,11 +1,9 @@
 from django.core.management import call_command
-from django.db.models import Count, Sum
 from django.test import Client
 from django.test import TestCase
 from django.urls import reverse
 
-from testset.models import Test, TestResult, TestResultDetail
-from user_account.models import User
+from testset.models import Test, TestResult
 
 PK = 1
 
