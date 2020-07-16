@@ -24,7 +24,7 @@ class User(AbstractUser):
             .values('test_result', 'question').annotate(
                 answers=Sum(
                     Case(
-                        When(is_correct=1, then=1),
+                        When(is_correct=True, then=1),
                         output_field=IntegerField()
                     )
                 ),
