@@ -47,161 +47,83 @@ class BaseFlowTest(TestCase):
         assert 'START ANOTHER TEST ▶️' in response.content.decode()
 
     def test_success_passed(self):
-        response = self.client.get(reverse('testset:start', kwargs={'test_pk': PK}))
-        assert response.status_code == 200
-        assert 'START ▶️' in response.content.decode()
+        self.client.get(reverse('testset:start', kwargs={'test_pk': PK}))
 
         test = Test.objects.get(pk=PK)
-        questions_count = test.questions_count()
-        user = User.objects.get(username=self.USERNAME)
+        questions = test.questions.all()
         url = reverse('testset:next', kwargs={'pk': PK})
 
-        test_result = TestResult.objects.create(
-            user=user,
-            test=test
-        )
-
-        current_test_result = TestResult.objects.get(
-            id=test_result.id
-        )
-
-        answers = []
-
-        for question in test.questions.all():
-            answer = {}
-            for n, variant in enumerate(question.variants.all(), 1):
-                if variant.is_correct:
-                    answer[f'answer_{n}'] = "1"
-
-                TestResultDetail.objects.create(
-                    test_result=current_test_result,
-                    question=question,
-                    variant=variant,
-                    is_correct=True
-                )
-
-            answers.append(answer)
-
-        test_result = test.test_results.last()
-
-        for step, answer in enumerate(answers, 1):
-            response = self.client.get(url)
-            assert response.status_code == 200
-            assert 'Submit' in response.content.decode()
-
-            response = self.client.post(
+        for idx, question in enumerate(questions, 1):
+            self.client.get(url)
+            correct_answers = {
+                f'answer_{idx}': '1'
+                for idx, variant in enumerate(question.variants.all(), 1)
+                if variant.is_correct
+            }
+            self.client.post(
                 path=url,
-                data=answer
+                data=correct_answers
             )
 
-            if step < questions_count:
-                self.assertRedirects(response, url)
-            else:
-                test_result.finish()
-                test_result.save()
-                assert response.status_code == 200
-
-        self.assertIn('START ANOTHER TEST ▶', response.content.decode())
-        self.assertIn(test_result.score_info(), response.content.decode())
-        self.assertIn(test_result.get_avr_score, response.content.decode())
+        test_result = TestResult.objects.order_by('-id').first()
+        self.assertEqual(test.questions_count(), int(test_result.avr_score))
 
     def test_success_failed(self):
-        response = self.client.get(reverse('testset:start', kwargs={'test_pk': PK}))
-        assert response.status_code == 200
-        assert 'START ▶️' in response.content.decode()
+        self.client.get(reverse('testset:start', kwargs={'test_pk': PK}))
 
         test = Test.objects.get(pk=PK)
-        questions_count = test.questions_count()
-        user = User.objects.get(username=self.USERNAME)
+        questions = test.questions.all()
         url = reverse('testset:next', kwargs={'pk': PK})
 
-        test_result = TestResult.objects.create(
-            user=user,
-            test=test
-        )
+        for idx, question in enumerate(questions, 1):
+            self.client.get(url)
 
-        current_test_result = TestResult.objects.get(
-            id=test_result.id
-        )
-
-        answers = []
-
-        for num_question, question in enumerate(test.questions.all(), 1):
-            answer = {}
-            is_correct = True
-            for n, variant in enumerate(question.variants.all(), 1):
-                if num_question == 1:
-                    if not variant.is_correct:
-                        is_correct = False
-                        answer[f'answer_{n}'] = "0"
-                else:
-                    if variant.is_correct:
-                        answer[f'answer_{n}'] = "1"
-
-                TestResultDetail.objects.create(
-                    test_result=current_test_result,
-                    question=question,
-                    variant=variant,
-                    is_correct=is_correct
-                )
-
-            answers.append(answer)
-
-        test_result = test.test_results.last()
-
-        for step, answer in enumerate(answers, 1):
-            response = self.client.get(url)
-            assert response.status_code == 200
-            assert 'Submit' in response.content.decode()
-
-            response = self.client.post(
+            variants = question.variants.all()
+            if idx == 2:
+                answers = {
+                    f'answer_{idx}': '0'
+                    for idx, variant in enumerate(variants, 1)
+                    if not variant.is_correct
+                }
+            else:
+                answers = {
+                    f'answer_{idx}': '1'
+                    for idx, variant in enumerate(variants, 1)
+                    if variant.is_correct
+                }
+            self.client.post(
                 path=url,
-                data=answer
+                data=answers
             )
 
-            if step < questions_count:
-                self.assertRedirects(response, url)
-            else:
-                test_result.finish()
-                test_result.save()
-                assert response.status_code == 200
-
-        self.assertIn('START ANOTHER TEST ▶', response.content.decode())
-        self.assertIn(test_result.score_info(), response.content.decode())
-        self.assertIn(test_result.get_avr_score, response.content.decode())
+        test_result = TestResult.objects.order_by('-id').first()
+        self.assertNotEqual(test.questions_count(), int(test_result.avr_score))
 
     def test_answers_exists(self):
-        response = self.client.get(reverse('testset:start', kwargs={'test_pk': PK}))
-        assert response.status_code == 200
-        assert 'START ▶️' in response.content.decode()
+        self.client.get(reverse('testset:start', kwargs={'test_pk': PK}))
 
         test = Test.objects.get(pk=PK)
         questions_count = test.questions_count()
         url = reverse('testset:next', kwargs={'pk': PK})
 
-        answers = []
-
         for num_question, question in enumerate(test.questions.all(), 1):
-            answer = {}
-            for n, variant in enumerate(question.variants.all(), 1):
-                if num_question == 2:
-                    continue
-                if variant.is_correct:
-                    answer[f'answer_{n}'] = "1"
+            self.client.get(url)
 
-            answers.append(answer)
-
-        for step, answer in enumerate(answers, 1):
-            response = self.client.get(url)
-            assert response.status_code == 200
-            assert 'Submit' in response.content.decode()
+            if num_question != 2:
+                correct_answers = {
+                    f'answer_{idx}': '1'
+                    for idx, variant in enumerate(question.variants.all(), 1)
+                    if variant.is_correct
+                }
+            else:
+                correct_answers = {}
 
             self.client.post(
                 path=url,
-                data=answer
+                data=correct_answers
             )
 
-            if step < questions_count:
-                if not answer:
+            if num_question < questions_count:
+                if not correct_answers:
                     response = self.client.get(reverse('testset:next', kwargs={'pk': PK}))
                     self.assertIn('ERROR: You should select at least 1 answer!', response.content.decode())
