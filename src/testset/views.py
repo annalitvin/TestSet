@@ -127,9 +127,6 @@ class TestRunView(LoginRequiredMixin, View):
 
             current_test_result.finish()
             current_test_result.save()
-            current_user = User.objects.get(pk=request.user.pk)
-            current_user.update_score()
-            current_user.save()
 
             score_info = current_test_result.score_info()
             score_result = current_test_result.avr_score
