@@ -4,7 +4,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, UpdateView
 
-from app import settings
+from django.conf import settings
 from user_account.forms import UserAccountRegistrationForm, UserAccountProfileForm
 
 
