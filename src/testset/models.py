@@ -83,6 +83,10 @@ class TestResult(models.Model):
     avr_score = models.DecimalField(max_digits=5, decimal_places=2, default=0,
                                     validators=[MinValueValidator(0), MaxValueValidator(100)], null=True)
 
+    @property
+    def get_avr_score(self):
+        return f'{self.avr_score}'
+
     def update_score(self):
         qs = self.test_result_details.values('question').annotate(
             num_answers=Count('question'),

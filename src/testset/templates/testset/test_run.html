@@ -1,9 +1,14 @@
 {% extends 'testset/base.html' %}
 {% load crispy_forms_tags %}
+{% load math %}
 
 {% block title_page %}
     {{ block.super }}
-    Question #{{ question.number }}: <b>{{ question.text }}</b> ?
+    Question #{{ question.number }}/{{ question.test.questions_count }}: <b>{{ question.text }}</b> ?
+    <div class="progress mt-4">
+      {% expr '(%1 - 1)/%2*100' question.number question.test.questions_count as percent %}
+        <div class="progress-bar" role="progressbar" style="width: {{ percent }}%" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
 {% endblock %}
 
 
