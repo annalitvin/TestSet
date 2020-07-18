@@ -51,3 +51,5 @@ LOGGING = {
         }
     }
 }
+
+TEST_RUNNER = "redgreenunittest.django.runner.RedGreenDiscoverRunner"
