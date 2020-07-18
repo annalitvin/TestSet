@@ -12,11 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 from app.settings.components.base import INSTALLED_APPS, MIDDLEWARE
 
-DEBUG = True
-
 INTERNAL_IPS = ['127.0.0.1']
-
-ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -51,3 +47,5 @@ LOGGING = {
         }
     }
 }
+
+TEST_RUNNER = "redgreenunittest.django.runner.RedGreenDiscoverRunner"

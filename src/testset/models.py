@@ -122,4 +122,7 @@ class TestResultDetail(models.Model):
     test_result = models.ForeignKey(to=TestResult, related_name='test_result_details', on_delete=models.CASCADE)
     question = models.ForeignKey(to=Question, on_delete=models.CASCADE)
     variant = models.ForeignKey(to=Variant, related_name='test_result_details', on_delete=models.CASCADE)
-    is_correct = models.BooleanField(null=True, default=False)
+    is_correct = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(1)],
+        default=0
+    )
