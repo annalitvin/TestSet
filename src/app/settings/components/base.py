@@ -19,10 +19,6 @@ load_dotenv(os.environ.get('ENV_CONFIG', ''))
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-DEBUG = False
-
-ALLOWED_HOSTS = []
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -131,3 +127,7 @@ LOGIN_REDIRECT_URL = '/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static')
+# ]
