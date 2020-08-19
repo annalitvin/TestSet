@@ -5,5 +5,9 @@ from app.settings.components.email import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-#STATIC_ROOT = 'var/www/testset/static'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(':')
+
+STATIC_ROOT = '/var/www/TestSet/static'
+
+MEDIA_ROOT = '/var/www/TestSet/media'
+
